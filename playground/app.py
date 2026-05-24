@@ -31,7 +31,7 @@ load_dotenv()
 
 st.set_page_config(page_title="MCP Automations Playground", page_icon=":electric_plug:", layout="wide")
 
-GITHUB_URL = "https://github.com/wzltmp/mcp-n8n-automations"
+GITHUB_URL = "https://github.com/wzltmp/mcp-automations"
 
 
 def _money(usd: float) -> str:
