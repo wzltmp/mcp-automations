@@ -33,6 +33,11 @@ st.set_page_config(page_title="MCP Automations Playground", page_icon=":electric
 
 GITHUB_URL = "https://github.com/wzltmp/mcp-automations"
 
+# Per-session abuse caps. The Anthropic console monthly cap is the real backstop;
+# these just deter casual abuse and make the limits visible to honest users.
+MAX_CALLS_PER_SESSION = 20
+MAX_SPEND_PER_SESSION_USD = 0.50
+
 
 def _money(usd: float) -> str:
     """Escape ``$`` so Streamlit's KaTeX renderer doesn't turn it into inline math."""
@@ -43,6 +48,24 @@ def _track_cost(cost: Cost) -> None:
     """Append this call's cost to the session running total."""
     session = st.session_state.setdefault("costs", [])
     session.append(cost)
+
+
+def _guard() -> bool:
+    """Return True if the call may proceed; otherwise render an error and return False."""
+    costs: list[Cost] = st.session_state.get("costs", [])
+    if len(costs) >= MAX_CALLS_PER_SESSION:
+        st.error(
+            f"Session limit reached ({MAX_CALLS_PER_SESSION} calls). "
+            "Refresh the page to start a new session."
+        )
+        return False
+    if sum(c.usd for c in costs) >= MAX_SPEND_PER_SESSION_USD:
+        st.error(
+            f"Session spend cap reached ({_money(MAX_SPEND_PER_SESSION_USD)}). "
+            "Refresh the page to start a new session."
+        )
+        return False
+    return True
 
 
 def _render_cost(cost: Cost) -> None:
@@ -84,6 +107,13 @@ with st.sidebar:
     costs: list[Cost] = st.session_state.get("costs", [])
     total = sum(c.usd for c in costs)
     st.metric("Total spend", _money(total), help=f"{len(costs)} call(s) this session")
+    col_calls, col_budget = st.columns(2)
+    col_calls.metric("Calls left", max(0, MAX_CALLS_PER_SESSION - len(costs)))
+    col_budget.metric("Budget left", _money(max(0.0, MAX_SPEND_PER_SESSION_USD - total)))
+    st.caption(
+        f"Per-session caps: {MAX_CALLS_PER_SESSION} calls / "
+        f"{_money(MAX_SPEND_PER_SESSION_USD)}. Refresh for a new session."
+    )
     if costs and st.button("Reset session cost"):
         st.session_state["costs"] = []
         st.rerun()
@@ -106,7 +136,7 @@ with tab_summary:
         url = st.text_input("URL", placeholder="https://www.paulgraham.com/greatwork.html")
         n_bullets = st.slider("Bullets", 3, 10, 5)
         submitted = st.form_submit_button("Summarize", type="primary")
-    if submitted and url:
+    if submitted and url and _guard():
         try:
             with st.spinner("Fetching + summarizing..."):
                 result = summarize_url(url, n_bullets=n_bullets)
@@ -129,7 +159,7 @@ with tab_repurpose:
         )
         fmt = st.selectbox("Format", ["twitter_thread", "linkedin_post", "newsletter"])
         submitted = st.form_submit_button("Repurpose", type="primary")
-    if submitted and text.strip():
+    if submitted and text.strip() and _guard():
         try:
             with st.spinner("Rewriting..."):
                 result = repurpose_content(text=text, format=fmt)
@@ -148,7 +178,7 @@ with tab_digest:
         topic = st.text_input("Topic", placeholder="e.g., AI agent frameworks")
         n_results = st.slider("Sources", 3, 10, 5)
         submitted = st.form_submit_button("Build digest", type="primary")
-    if submitted and topic.strip():
+    if submitted and topic.strip() and _guard():
         try:
             with st.spinner("Searching + summarizing..."):
                 result = daily_digest(topic=topic, n_results=n_results)
@@ -171,7 +201,7 @@ with tab_competitors:
         domain = st.text_input("Company domain", placeholder="stripe.com")
         n = st.slider("How many competitors", 3, 10, 5)
         submitted = st.form_submit_button("Find competitors", type="primary")
-    if submitted and domain.strip():
+    if submitted and domain.strip() and _guard():
         try:
             with st.spinner("Researching..."):
                 result = find_competitors(domain=domain, n=n)
