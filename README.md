@@ -155,7 +155,7 @@ Using all three is a signal of reading the spec, not just a quickstart.
 ✅ Public MCP HTTP server on Fly.io
 ✅ Cost protection (per-session caps + monthly Anthropic cap)
 ✅ Real test coverage (23 offline unit tests)
-🚧 MCP server registry submission (planned)
+✅ [Listed on the Official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=mcp-automations) as `io.github.wzltmp/mcp-automations`
 🚧 Demo gif + screenshots (planned)
 🚧 n8n self-host via docker-compose (planned)
 
