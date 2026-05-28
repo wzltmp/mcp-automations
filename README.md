@@ -23,6 +23,8 @@ curl -X POST https://mcp-automations.fly.dev/mcp \
 
 Most "AI engineer" portfolio projects are *applications* (a RAG chatbot, an agent that does research). This project is the **layer underneath** — the typed tools an LLM can call and the transport plumbing that exposes them. MCP is the emerging standard for LLM tool use (~97M monthly SDK downloads as of early 2026); building one — not just consuming one — is the rare skill.
 
+For a deeper look at the design decisions — why two transports, how cost telemetry works, the exception hierarchy, what I'd do differently — see [WRITEUP.md](WRITEUP.md).
+
 ## Tools
 
 | Tool | Model | What it does |
@@ -156,6 +158,7 @@ Using all three is a signal of reading the spec, not just a quickstart.
 ✅ Cost protection (per-session caps + monthly Anthropic cap)
 ✅ Real test coverage (23 offline unit tests)
 ✅ [Listed on the Official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=mcp-automations) as `io.github.wzltmp/mcp-automations`
+✅ [Long-form writeup](WRITEUP.md) of design decisions
 🚧 Demo gif + screenshots (planned)
 🚧 n8n self-host via docker-compose (planned)
 
