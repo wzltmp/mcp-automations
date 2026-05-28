@@ -19,6 +19,8 @@ from anthropic import Anthropic
 from anthropic.types import TextBlock
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import HTMLResponse
 from tavily import TavilyClient
 
 from mcp_server.exceptions import EmptyLLMResponseError, ExtractionError, UpstreamAPIError
@@ -262,6 +264,74 @@ def daily_brief(topic: str = "AI engineering jobs") -> str:
         "Then use the `repurpose_content` tool to turn that digest into a newsletter-style "
         "email of ~200 words. Return the final email body, ready to send."
     )
+
+
+# ---- Public landing page at GET / (for browser visitors; MCP protocol uses POST /mcp) ----
+_LANDING_HTML = """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MCP Automations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+           max-width: 720px; margin: 3em auto; padding: 0 1em; line-height: 1.55; color: #222; }
+    h1 { margin-bottom: 0.2em; }
+    .sub { color: #555; margin-top: 0; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+    pre { background: #f4f4f6; padding: 1em; border-radius: 6px; overflow-x: auto; }
+    a { color: #1758b8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .links { display: flex; gap: 1.2em; flex-wrap: wrap; margin: 1.5em 0; }
+    .badge { background: #eef; padding: 0.3em 0.7em; border-radius: 4px; font-size: 0.9em; }
+    footer { color: #888; font-size: 0.85em; margin-top: 3em; }
+  </style>
+</head>
+<body>
+  <h1>MCP Automations</h1>
+  <p class="sub">A Model Context Protocol server with 4 typed tools, deployed on Fly.io.</p>
+
+  <div class="links">
+    <a href="https://github.com/wzltmp/mcp-automations">GitHub</a>
+    <a href="https://registry.modelcontextprotocol.io/v0/servers?search=mcp-automations">Official MCP Registry</a>
+    <a href="https://mcp-automations-5vgea2ynuyrvbzkcxm6yoh.streamlit.app/">Browser playground</a>
+  </div>
+
+  <p>This URL is an <strong>MCP endpoint, not a webpage.</strong> MCP clients connect via JSON-RPC over POST to <code>/mcp</code>. Try it:</p>
+
+  <pre>curl -X POST https://mcp-automations.fly.dev/mcp \\
+  -H 'Content-Type: application/json' \\
+  -H 'Accept: application/json, text/event-stream' \\
+  -d '{"jsonrpc":"2.0","method":"initialize","id":1,
+       "params":{"protocolVersion":"2024-11-05",
+                 "capabilities":{},
+                 "clientInfo":{"name":"curl","version":"1"}}}'</pre>
+
+  <p>Or add it to your Claude Desktop config (<code>~/Library/Application Support/Claude/claude_desktop_config.json</code>):</p>
+
+  <pre>{
+  "mcpServers": {
+    "mcp-automations": {
+      "url": "https://mcp-automations.fly.dev/mcp",
+      "transport": "http"
+    }
+  }
+}</pre>
+
+  <p>Tools exposed: <span class="badge">summarize_url</span> <span class="badge">repurpose_content</span> <span class="badge">daily_digest</span> <span class="badge">find_competitors</span></p>
+
+  <p>For a non-technical walk-through, try the <a href="https://mcp-automations-5vgea2ynuyrvbzkcxm6yoh.streamlit.app/">browser playground</a> — same tools, no setup.</p>
+
+  <footer>Listed on the Official MCP Registry as <code>io.github.wzltmp/mcp-automations</code>.</footer>
+</body>
+</html>
+"""
+
+
+@mcp.custom_route("/", methods=["GET"])
+async def landing(_request: Request) -> HTMLResponse:
+    """Browser-friendly landing page so non-MCP clients hitting GET / see something useful."""
+    return HTMLResponse(_LANDING_HTML)
 
 
 def main() -> None:
