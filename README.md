@@ -159,6 +159,7 @@ Using all three is a signal of reading the spec, not just a quickstart.
 ✅ Real test coverage (23 offline unit tests)
 ✅ [Listed on the Official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=mcp-automations) as `io.github.wzltmp/mcp-automations`
 ✅ [Long-form writeup](WRITEUP.md) of design decisions
+✅ Consumed by another agent, not just demoed — [langgraph-research-agent](https://github.com/wzltmp/langgraph-research-agent)'s `read_node` calls this server's `summarize_url` tool over HTTP (with local fallback if the call fails)
 🚧 Demo gif + screenshots (planned)
 🚧 n8n self-host via docker-compose (planned)
 
